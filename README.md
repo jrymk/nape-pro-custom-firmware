@@ -2,11 +2,28 @@
 Custom firmware for the Keychron Nape Pro
 
 ## Disclaimer
-This project is assisted with AI, and the code is unaudited.
-
 I am not responsible for any damage caused by the usage of this firmware.
 
-Tested on PCB revisions: Keychron_Nape_Pro_MCU VER1.2 + Keychron_Nape_Pro_USB VER1.1
+## Custom Firmware Usage
+
+Please read [#full-backup-and-recovery](#full-backup-and-recovery) first, and make sure you are able to perform it in case things go wrong.
+
+### Flashing the firmware
+Go to [nape-pro.jerrymk.com](https://nape-pro.jerrymk.com/), go to device tab, and follow the instructions.
+
+[Video walkthrough](https://s3.jerrymk.com/pub/Screen%20Recording%202026-11-26%20153737.mp4)
+
+### Protected mode
+The LED should flash amber (2Hz, 50% duty), and mouse input remains non-functional when the custom firmware is first flashed. 
+
+For flashing via the web tool, it will guide you through the adopting process. 
+
+With CLI, use the `nape.exe adopt stock-profile.npb` to take a backup of the existing user data (mostly Bluetooth and 2.4GHz receiver bonds and profiles). Then, it will initialize the device for the custom firmware, and exit out of protected mode.
+
+### Download mode
+In case a bug in the firmware crashes the program, you may hold down the Bluetooth pairing key, M1, and M2 keys before powering it on. The green LED will flash (2Hz, 25ms), and the device is ready for a firmware flash over USB. This only works on the custom firmware that is not fully bricked. If you can't get USB flashing to work, UART flashing via MPTool is the fallback.
+
+The user data may be restored when you want to go back to stock firmware.
 
 ## Full backup and Recovery
 ### Backup
@@ -28,15 +45,3 @@ Select Browse, pick the file, verify the files in the list (select the entry and
 <img width="2441" height="1782" alt="image" src="https://github.com/user-attachments/assets/f1ad1803-e6a2-4cb1-ba34-5657097a9b8a" />
 Note that the file name must have the MD5 checksum, and have a proper wrapper. Use the `nape.exe prepare-bin ReadbackFlash.bin --type dump --address 0x04000000` command to generate a proper file for flashing.
 If you do not have a backup, you might be able to use the flash image supplied in the repository to get back up running. What you will lose is the Bluetooth connection bonds, 2.4GHz receiver bond (which can be re-paired on the stock firmware by unplugging the receiver, hold down the pairing button and 04 for 3 seconds until flashes green, then plug in the receiver), and the profiles. There doesn't seem to be anything, such as serial numbers, that is unique to each device and irrecoverable, though taking your own backup is still highly recommended.
-
-## Custom Firmware Usage
-### Flashing the firmware
-pending
-
-### Download mode
-In case a bug in the firmware crashes the program, you may hold down the Bluetooth pairing key, M1, and M2 keys before powering it on. The green LED will flash (2Hz, 25ms), and the device is ready for a firmware flash over USB. This only works on the custom firmware that is not fully bricked. If you can't get USB flashing to work, UART flashing via MPTool is the fallback.
-
-### Protected mode
-The LED should flash amber (2Hz, 50% duty), and mouse input remains non-functional when the custom firmware is first flashed. Use the `nape.exe adopt stock-profile.npb` to take a backup of the existing user data (mostly Bluetooth and 2.4GHz receiver bonds and profiles). Then, it will initialize the device for the custom firmware, and exit out of protected mode.
-
-The user data may be restored when you want to go back to stock firmware.
