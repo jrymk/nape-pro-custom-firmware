@@ -1,0 +1,5 @@
+Realtek HAL driver sources, Apache-2.0 repository.
+https://github.com/rtkconnectivity/hal_realtek
+Commit: 1e5d5c866f44c2ead1535b460e724de1f88c9dd9
+Original path: bee/drivers/ppt/driver
+Local modifications are recorded in ../../PORT-NOTES.txt.

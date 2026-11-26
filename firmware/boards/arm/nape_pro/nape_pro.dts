@@ -1,0 +1,78 @@
+/dts-v1/;
+#include <realtek/rtl87x2g.dtsi>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+/ {
+    zephyr,user {
+        /* Stock LED init/output path: GPIOB bit 2, physical pad P3_5. */
+        led-power-gpios = <&gpiob 2 GPIO_ACTIVE_HIGH>;
+    };
+    leds {
+        compatible = "pwm-leds";
+        red_led: red { pwms = <&pwm3 0 250000 PWM_POLARITY_INVERTED>; };
+        green_led: green { pwms = <&pwm4 0 250000 PWM_POLARITY_INVERTED>; };
+        blue_led: blue { pwms = <&pwm5 0 250000 PWM_POLARITY_INVERTED>; };
+    };
+    model = "Keychron Nape Pro";
+    compatible = "keychron,nape-pro";
+    chosen {
+        zephyr,sram = &ram_data;
+        zephyr,flash = &flash;
+        zephyr,itcm = &ram_code;
+        zephyr,code-partition = &app_partition;
+        zephyr,flash-controller = &fmc;
+    };
+};
+&cpu { clock-frequency = <40000000>; };
+&usb { status = "okay"; };
+&gpiob { status = "okay"; };
+&gpioa { status = "okay"; };
+&pinctrl {
+    led_pwm3: led-pwm3 {
+        group1 { psels = <RTL87X2G_PSEL(TIMER_PWM3, P0_4, DIR_OUT, DRV_LOW, PULL_DOWN)>; };
+    };
+    led_pwm4: led-pwm4 {
+        group1 { psels = <RTL87X2G_PSEL(TIMER_PWM4, P1_0, DIR_OUT, DRV_LOW, PULL_DOWN)>; };
+    };
+    led_pwm5: led-pwm5 {
+        group1 { psels = <RTL87X2G_PSEL(TIMER_PWM5, P1_1, DIR_OUT, DRV_LOW, PULL_DOWN)>; };
+    };
+};
+&timer3 {
+    status = "okay";
+    prescaler = <1>;
+    pwm3: pwm3 {
+        status = "okay";
+        pinctrl-0 = <&led_pwm3>;
+        pinctrl-names = "default";
+    };
+};
+&timer4 {
+    status = "okay";
+    prescaler = <1>;
+    pwm4: pwm4 {
+        status = "okay";
+        pinctrl-0 = <&led_pwm4>;
+        pinctrl-names = "default";
+    };
+};
+&timer5 {
+    status = "okay";
+    prescaler = <1>;
+    pwm5: pwm5 {
+        status = "okay";
+        pinctrl-0 = <&led_pwm5>;
+        pinctrl-names = "default";
+    };
+};
+&flash {
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+        app_partition: partition@2d000 { label = "application"; reg = <0x2d000 0x5c000>; };
+        journal: partition@89000 { label = "migration"; reg = <0x89000 0x1000>; };
+        staging: partition@9c000 { label = "ota"; reg = <0x9c000 0x59000>; };
+        userdata: partition@f5000 { label = "userdata"; reg = <0xf5000 0xb000>; };
+    };
+};

@@ -1,0 +1,44 @@
+Input and configuration ownership
+
+The input thread exclusively mutates the input engine, button debounce state,
+motion processor and outgoing HID state. input_lock serializes applying a new
+configuration and status reads. USB callbacks only enqueue maintenance requests
+or set connection state; they do not touch profiles or flash.
+
+The radio thread exclusively performs PHY initialization and transmitter work.
+A bounded queue carries mouse PDUs. ACK failure retries the same software
+sequence; reconnect clears stale relative reports and begins neutral. This is
+an initial stock-compatible mouse link, not the full stock RF power/hop policy.
+The USB maintenance path remains available while radio output is active.
+
+service.c serializes maintenance transfers on main. Before updates/restores or
+configuration saves, runtime pauses and releases outputs. config_store refuses
+a save if radio shutdown did not complete. Protected/stock NVS is never written
+by the input engine. Recovery rejects profile editing and skips the input thread.
+
+The service scratch union is deliberately shared: restoration requires 44 KiB;
+config upload needs 4896 wire bytes plus a decoded config. They cannot run
+concurrently. The input thread owns a separate immutable active config copy.
+Slot headers (NPCOM001) contain generation, size, data CRC and header CRC;
+the eight-byte seal is programmed last. Slots never overlap the NPSTOR01
+ownership header. Load validates both slots and uses the newest valid generation.
+
+Public profile format NPCFG002 uses explicit little-endian fields, not compiler
+struct layouts. Unsupported modes are rejected. Incompatible custom slots load current defaults without modifying the ownership
+header or stock backup/restore data. There is no legacy settings migration. Button
+outputs are opaque IDs; mouse 1..8, keyboard bit15 + modifier bits7..14 + usage0..6.
+Motion output uses 120 wheel units per detent. report_transport converts to the
+host's negotiated resolution; radio accumulates to full wheel steps. Future
+swipe/dial processors should emit actions through the existing ownership path,
+not write USB/radio packets directly. Avoid blocking callbacks or dynamic memory
+in the input processing path.
+
+Recovery GPIO check executes first in main, before storage/profile loading,
+sensor or PHY initialization. Zephyr core/device startup necessarily precedes
+main. Recovery is replaceable application code, not a protected boot partition.
+
+RAM preview (0x36 begin / 0x33 chunks / 0x37 CRC-checked apply) uses the same
+staging buffer without erasing or programming flash. 0x38 reloads saved settings.
+The input thread continues until the atomic apply, which releases held outputs
+and suppresses physical buttons until release. Status byte 42 is configuration
+version 2, byte 43 indicates a RAM preview. The radio owns separate buffers.

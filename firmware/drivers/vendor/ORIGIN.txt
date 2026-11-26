@@ -1,0 +1,3 @@
+Realtek RTL87x2G SDK ef30d747dfc6c80d467b4d48b1dc44a274504eab
+bsp/driver/spi3w/{inc/rtl_spi3w.h,src/rtl_common/rtl_spi3w.c,src/rtl87x2g/rtl_spi3w_def.h}
+Apache-2.0; header include path adjusted to local layout.

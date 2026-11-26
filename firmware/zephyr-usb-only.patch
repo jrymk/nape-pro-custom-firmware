@@ -1,0 +1,35 @@
+--- a/soc/arm/realtek_bee/rtl87x2g/soc.c
++++ b/soc/arm/realtek_bee/rtl87x2g/soc.c
+@@ -134,10 +134,12 @@
+ 
+ 	dvfs_init();
+ 
+-	phy_hw_control_init(false);
+-	phy_init(false);/* use osif timer api */
+-
+-	thermal_tracking_timer_init();
++	if (IS_ENABLED(CONFIG_REALTEK_BT)) {
++		phy_hw_control_init(false);
++		phy_init(false);
++		/* Keep RF thermal tracking with the PHY initialization it follows. */
++		thermal_tracking_timer_init();
++	}
+ 
+ 	if (flash_nor_get_exist_nsc(FLASH_NOR_IDX_SPIC0)) {
+ 		flash_nor_dump_main_info();
+@@ -154,6 +156,7 @@
+ 
+ static int rtk_task_init(void)
+ {
++#ifdef CONFIG_REALTEK_BT
+ 	BOOL_PATCH_FUNC lowerstack_entry;
+ 	T_ROM_HEADER_FORMAT *stack_header = (T_ROM_HEADER_FORMAT *)STACK_ROM_ADDRESS;
+ 
+@@ -167,6 +170,7 @@
+ 		printk("Failed to load Realtek Lowerstack ROM!\n");
+ 	}
+ 
++#endif
+ 	AON_REG_WRITE_BITFIELD(AON_NS_REG0X_FW_GENERAL_NS, km4_pon_boot_done, 1);
+ 
+ 	return 0;

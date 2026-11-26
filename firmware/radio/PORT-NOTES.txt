@@ -1,0 +1,22 @@
+Stock-receiver transport provenance
+
+Driver source: Realtek hal_realtek commit
+1e5d5c866f44c2ead1535b460e724de1f88c9dd9, bee/drivers/ppt/driver.
+The repository Apache-2.0 license is retained in vendor/realtek/LICENSE.
+
+Local compatibility change: removed the phy_init function declaration from
+common/ll_common.h. The pinned Zephyr ROM API declares it as a function-pointer
+variable; the original declaration conflicts with that ABI.
+
+Additional RTL87x2G dependency headers came from Realtek's SDK commit
+ef30d747dfc6c80d467b4d48b1dc44a274504eab, subsys/ppt/driver/common/rtl87x2g:
+power_manager_slave.h, platform_rtc.h, power_manager_interface.h,
+power_manager_unit_platform.h, debug_port.h.
+
+Only ppt_driver.c and ppt_simple.c are compiled. The older proprietary sync
+library is not linked. stock_codec.c reconstructs the packet helpers separately;
+radio_link.c supplies the initialization, IRQ, reconnect and mouse-report logic.
+It uses an existing receiver pairing record from the custom configuration;
+fresh receiver pairing is not implemented. USB maintenance remains available
+while the radio is active. See ../ARCHITECTURE.txt for ownership and flash-write
+coordination.

@@ -1,0 +1,4 @@
+if BOARD_NAPE_PRO
+config BOARD
+    default "nape_pro"
+endif

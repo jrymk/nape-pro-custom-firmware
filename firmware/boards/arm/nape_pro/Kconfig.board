@@ -1,0 +1,4 @@
+config BOARD_NAPE_PRO
+    bool "Keychron Nape Pro maintenance"
+    depends on SOC_SERIES_RTL87X2G
+    select SOC_PART_NUMBER_RTL8762GKU
