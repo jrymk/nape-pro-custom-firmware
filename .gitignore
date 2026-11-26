@@ -1,0 +1,48 @@
+# Only these root paths belong in the source repository. Keep device exports,
+# binaries, build dependencies and local research out even after `git add .`.
+/*
+!/.gitignore
+!/README.md
+!/docs/
+!/firmware/
+!/tools/
+!/web/
+!/build.py
+!/nape.py
+!/nape_cli.py
+!/nape_support.py
+!/nape_mptool.py
+!/nape_config_app.py
+!/profile_config.py
+!/requirements.txt
+!/requirements-build.txt
+!/requirements-package.txt
+
+# Private data and generated files, including inside public source directories.
+*.npb
+*.bin
+*.bin.bak
+ReadbackFlash*
+*.exe
+*.dll
+*.so
+*.elf
+*.o
+*.a
+*.zip
+*.log
+*.pyc
+__pycache__/
+.venv/
+.build/
+.wrangler/
+.env
+.env.*
+node_modules/
+.ruff_cache/
+dist/
+build/
+
+# Development-only suites and bring-up tools stay local.
+/web/tests/
+/firmware/diagnostic/

@@ -1,5 +1,5 @@
 // File formats and maintenance operations shared by the Device panel and tests.
-// No network requests: firmware and personal archives stay in this browser.
+// Personal archives stay in this browser; release downloads contain public firmware only.
 import { hex } from "./schema.js";
 export const USER_LEN = 0xb000;
 export const STOCK_SHA =
@@ -38,6 +38,52 @@ export async function validateImage(bytes, { stock = false } = {}) {
     sha256: hash,
     kind: stock ? "Stock application" : "Custom application",
     address: "0x0402D000",
+  };
+}
+export async function downloadFirmware(stock, progress = () => {}) {
+  progress(0, "Fetching latest GitHub release");
+  const response = await fetch(`/api/firmware/${stock ? "stock" : "custom"}`, {
+    signal: AbortSignal.timeout(60000),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw Error(
+      error.error ||
+        "Release download is unavailable. Choose a local file instead.",
+    );
+  }
+  const size = Number(response.headers.get("Content-Length"));
+  if (
+    !Number.isInteger(size) ||
+    size < 4096 ||
+    size > 0x59000 ||
+    !response.body
+  )
+    throw Error("Invalid release download size.");
+  const data = new Uint8Array(size);
+  const reader = response.body.getReader();
+  let offset = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (offset + value.length > size) {
+      await reader.cancel();
+      throw Error("Release download exceeds its declared size.");
+    }
+    data.set(value, offset);
+    offset += value.length;
+    progress(offset / size, "Downloading firmware");
+  }
+  if (offset !== size)
+    throw Error("Incomplete firmware download. Please retry.");
+  const info = await validateImage(data, { stock });
+  return {
+    data,
+    info,
+    name: response.headers.get("X-Firmware-Name") || "Release firmware",
+    release: decodeURIComponent(
+      response.headers.get("X-Firmware-Release") || "latest",
+    ),
   };
 }
 export async function archive(data) {

@@ -22,7 +22,11 @@ const headers = {
 const server = http.createServer(async (req, res) => {
   try {
     if (new URL(req.url, "http://localhost").pathname.startsWith("/api/")) {
-      const response = await releaseDownload(new Request(new URL(req.url, "http://localhost"), { method: req.method }));
+      const response = await releaseDownload(
+        new Request(new URL(req.url, "http://localhost"), {
+          method: req.method,
+        }),
+      );
       res.writeHead(response.status, Object.fromEntries(response.headers));
       res.end(Buffer.from(await response.arrayBuffer()));
       return;

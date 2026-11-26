@@ -1,0 +1,10 @@
+cmake==3.28.4
+ninja==1.13.2
+west==1.5.0
+pyelftools==0.33
+PyYAML==6.0.4
+packaging==26.4
+pykwalify==1.8.0
+intelhex==2.3.0
+cbor2==6.3.0
+canopen==2.4.1

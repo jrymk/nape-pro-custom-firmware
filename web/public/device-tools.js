@@ -23,8 +23,9 @@ export function mountDeviceTools(root, api) {
     <div class="flow-step" id="maintenance-install-flash"><span class="step-number">2</span><div>
       <h3>Flash custom firmware</h3><p id="maintenance-firmware-status">Connect a device to flash.</p>
       <label>Custom application .bin <input id="maintenance-image" type="file" accept=".bin"></label>
+      <button id="maintenance-latest-custom">Use latest release</button>
       <a href="https://github.com/jrymk/nape-pro-custom-firmware/releases" target="_blank" rel="noopener noreferrer">GitHub firmware releases ↗</a>
-      <small>Download the application .bin, then choose it above. A full UART dump cannot be flashed here.</small>
+      <small>Load the latest release or choose a local application .bin. A full UART dump cannot be flashed here.</small>
       <pre id="maintenance-image-info">No firmware selected.</pre>
       <button id="maintenance-update" class="primary">Flash custom firmware</button>
       <small>Firmware is checked before activation. Existing user data is retained.</small>
@@ -55,6 +56,7 @@ export function mountDeviceTools(root, api) {
     <div class="flow-step" id="maintenance-restore-flash"><span class="step-number">3</span><div>
       <h3>Restore data and flash stock firmware</h3>
       <label>Stock application .bin <input id="maintenance-stock-image" type="file" accept=".bin"></label>
+      <button id="maintenance-latest-stock">Use stock from latest release</button>
       <a href="https://github.com/jrymk/nape-pro-custom-firmware/releases" target="_blank" rel="noopener noreferrer">GitHub firmware releases ↗</a>
       <pre id="maintenance-stock-image-info">No stock firmware selected.</pre>
       <button id="maintenance-stock" class="primary">Restore data and flash stock</button>
@@ -351,6 +353,35 @@ export function mountDeviceTools(root, api) {
     $("stock-image-info").textContent =
       `${info.kind} · ${info.bytes.toLocaleString()} bytes · SHA-256 verified`;
   });
+  for (const stock of [false, true]) {
+    const id = stock ? "stock-image" : "image";
+    $(stock ? "latest-stock" : "latest-custom").onclick = wrap(async () => {
+      if (stock) stockImage = null;
+      else {
+        image = null;
+        imageInfo = null;
+      }
+      $(id).value = "";
+      $(id + "-info").textContent = "Fetching latest release…";
+      try {
+        const downloaded = await maintenance.downloadFirmware(stock, progress);
+        if (stock) stockImage = downloaded.data;
+        else {
+          image = downloaded.data;
+          imageInfo = downloaded.info;
+        }
+        $(id + "-info").textContent =
+          `${downloaded.name} · ${downloaded.release}\n${downloaded.info.bytes.toLocaleString()} bytes · SHA-256 ${downloaded.info.sha256}`;
+        result(
+          "Firmware downloaded and verified. Ready to flash when you choose.",
+        );
+      } catch (error) {
+        $(id + "-info").textContent =
+          "No firmware selected. Choose a local file or retry the download.";
+        throw error;
+      }
+    });
+  }
   $("archive").onchange = wrap(async () => {
     backup = null;
     $("archive-info").textContent = "Checking archive…";
@@ -419,9 +450,7 @@ export function mountDeviceTools(root, api) {
   $("stock").onclick = wrap(() =>
     run(async () => {
       if (!backup || !stockImage)
-        throw Error(
-          "Select an original .npb and the stock application image.",
-        );
+        throw Error("Select an original .npb and the stock application image.");
       await maintenance.loadArchive(backup);
       await maintenance.validateImage(stockImage, { stock: true });
       if (

@@ -13,64 +13,110 @@ export async function releaseDownload(request, cache) {
   const kind = url.pathname.match(/^\/api\/firmware\/(custom|stock)$/)?.[1];
   if (!kind) return new Response("Not found", { status: 404 });
   if (request.method !== "GET")
-    return new Response("Method not allowed", { status: 405, headers: { Allow: "GET" } });
+    return new Response("Method not allowed", {
+      status: 405,
+      headers: { Allow: "GET" },
+    });
   const cacheKey = new Request(`${url.origin}${url.pathname}`);
   const cached = await cache?.match(cacheKey);
   if (cached) return cached;
   try {
-    const releaseResponse = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
-      headers: { Accept: "application/vnd.github+json", "User-Agent": "Nape-Studio" },
+    // The public latest redirect avoids GitHub API's shared-IP quota on Workers.
+    const latest = await fetch(`https://github.com/${repo}/releases/latest`, {
+      redirect: "manual",
       signal: AbortSignal.timeout(15000),
     });
-    if (!releaseResponse.ok)
-      throw Error(releaseResponse.status === 404
-        ? "No published stable release is available yet. Choose a local file instead."
-        : "GitHub releases are unavailable or rate limited. Try again later or choose a local file.");
-    const release = await releaseResponse.json();
-    if (release.draft || release.prerelease || typeof release.tag_name !== "string")
-      throw Error("No published stable release is available.");
-    const candidates = (release.assets || []).filter(a => names[kind].test(a.name));
+    const location = latest.headers.get("Location") || "";
+    const tagPrefix = `https://github.com/${repo}/releases/tag/`;
+    if (latest.status !== 302 || !location.startsWith(tagPrefix))
+      throw Error(
+        "Latest GitHub release is unavailable. Choose a local file or retry later.",
+      );
+    const tag = decodeURIComponent(location.slice(tagPrefix.length));
+    const listing = await fetch(
+      `https://github.com/${repo}/releases/expanded_assets/${encodeURIComponent(tag)}`,
+      {
+        signal: AbortSignal.timeout(15000),
+      },
+    );
+    if (!listing.ok)
+      throw Error(
+        "GitHub release assets are unavailable. Choose a local file or retry.",
+      );
+    const html = await listing.text();
+    const prefix = `/${repo}/releases/download/${encodeURIComponent(tag)}/`;
+    const candidates = [
+      ...new Set(
+        [...html.matchAll(/href="([^"]+)"/g)]
+          .map((match) => match[1])
+          .filter((href) => href.startsWith(prefix))
+          .map((href) => decodeURIComponent(href.slice(prefix.length)))
+          .filter((name) => names[kind].test(name)),
+      ),
+    ];
     if (candidates.length !== 1)
-      throw Error(`The latest release must contain exactly one ${kind} application .bin. Choose a local file instead.`);
-    const asset = candidates[0];
-    if (!Number.isInteger(asset.size) || asset.size < 4096 || asset.size > maxSize)
-      throw Error("The release asset is not an application-sized firmware image.");
+      throw Error(
+        `The latest release must contain exactly one ${kind} application .bin. Choose a local file instead.`,
+      );
+    const name = candidates[0];
     const download = await fetch(
-      `https://github.com/${repo}/releases/download/${encodeURIComponent(release.tag_name)}/${encodeURIComponent(asset.name)}`,
+      `https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}/${encodeURIComponent(name)}`,
       { signal: AbortSignal.timeout(30000) },
     );
-    if (!download.ok || !download.body) throw Error("GitHub could not download the firmware. Choose a local file or retry.");
+    if (!download.ok || !download.body)
+      throw Error(
+        "GitHub could not download the firmware. Choose a local file or retry.",
+      );
+    const declaredSize = download.headers.get("Content-Length");
+    if (
+      declaredSize !== null &&
+      (!Number.isInteger(Number(declaredSize)) ||
+        Number(declaredSize) < 4096 ||
+        Number(declaredSize) > maxSize)
+    )
+      throw Error(
+        "The release asset is not an application-sized firmware image.",
+      );
     const reader = download.body.getReader();
-    const bytes = new Uint8Array(asset.size);
+    const buffer = new Uint8Array(maxSize);
     let offset = 0;
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      if (offset + value.length > bytes.length) {
+      if (offset + value.length > maxSize) {
         await reader.cancel();
-        throw Error("Release download exceeds its declared size.");
+        throw Error("Release download exceeds the application size limit.");
       }
-      bytes.set(value, offset);
+      buffer.set(value, offset);
       offset += value.length;
     }
-    if (offset !== bytes.length) throw Error("Incomplete release download. Please retry.");
-    const info = await validateImage(bytes, { stock: kind === "stock" });
-    if (asset.digest && asset.digest !== `sha256:${info.sha256}`)
-      throw Error("Release asset checksum mismatch.");
-    const response = new Response(bytes, { headers: {
-      "Content-Type": "application/octet-stream",
-      "Content-Length": String(bytes.length),
-      "Content-Disposition": `attachment; filename="${asset.name}"`,
-      "X-Firmware-Name": asset.name,
-      "X-Firmware-Release": encodeURIComponent(release.tag_name),
-      "X-Content-Type-Options": "nosniff",
-      "Cache-Control": "public, max-age=300",
-    } });
+    if (declaredSize !== null && offset !== Number(declaredSize))
+      throw Error("Incomplete release download. Please retry.");
+    const bytes = buffer.slice(0, offset);
+    await validateImage(bytes, { stock: kind === "stock" });
+    const response = new Response(bytes, {
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "Content-Length": String(bytes.length),
+        "Content-Disposition": `attachment; filename="${name}"`,
+        "X-Firmware-Name": name,
+        "X-Firmware-Release": encodeURIComponent(tag),
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "public, max-age=300",
+      },
+    });
     await cache?.put(cacheKey, response.clone());
     return response;
   } catch (error) {
-    return Response.json({ error: error.message }, {
-      status: 502, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
-    });
+    return Response.json(
+      { error: error.message },
+      {
+        status: 502,
+        headers: {
+          "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff",
+        },
+      },
+    );
   }
 }
