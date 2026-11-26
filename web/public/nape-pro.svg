@@ -1,0 +1,317 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  class="trackball"
+  viewBox="0 0 500 244"
+  role="group"
+  aria-label="Nape Pro control map"
+>
+  <style>/* Device geometry is the target; only the small controls get external cards. */
+.trackball {
+  --map-outline: #abb5c0;
+}
+.map-outline {
+  fill: none;
+  stroke: var(--map-outline);
+  stroke-width: 1;
+}
+.map-control {
+  cursor: pointer;
+  outline: none;
+}
+.control-surface {
+  fill: #e8ecf0;
+  stroke: none;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  transition:
+    fill 120ms,
+    stroke-width 120ms;
+}
+.map-control text {
+  pointer-events: none;
+  fill: #273341;
+  font-family: "Segoe UI", sans-serif;
+  text-anchor: start;
+}
+.map-control .control-name {
+  font-size: 9px;
+  font-weight: 500;
+  fill: #586575;
+}
+.map-control .control-function {
+  font-size: 11px;
+  font-weight: 600;
+}
+.map-control.center-label text {
+  text-anchor: middle;
+}
+.map-control:hover .control-surface {
+  fill: #dce2e8;
+}
+.map-control.selected .control-surface {
+  fill: #cbd8e3;
+}
+.map-control:focus-visible .control-surface {
+  stroke: #20364b;
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+}
+.led-hit {
+  fill: transparent;
+  stroke: none;
+}
+.button-chips {
+  display: none;
+}
+
+.trackball.vertical .control-card .control-name {
+  font-size: 12px;
+}
+.trackball.vertical .control-card .control-function {
+  font-size: 15px;
+}
+
+.map-control.layer-target .control-surface { stroke: var(--target-color); }
+</style>
+  <title>Nape Pro controls and layer functions</title>
+  <g class="map-outline" aria-hidden="true">
+    <path d="M32 60 H95 V180 H32 Q20 180 20 168 V72 Q20 60 32 60 Z" />
+    <path d="M405 60 H468 Q480 60 480 72 V168 Q480 180 468 180 H405 Z" />
+    <circle cx="250" cy="120" r="61" />
+    <circle cx="250" cy="120" r="52" />
+  </g>
+  <g
+    class="map-control"
+    data-control="3"
+    role="button"
+    tabindex="0"
+    aria-label="Configure 04"
+  >
+    <path
+      class="control-surface"
+      d="M102 60 H220 Q222 60 220 62 C198 74 185 93 183 116 Q183 118 181 118 H102 Q100 118 100 116 V62 Q100 60 102 60 Z"
+      transform=""
+    />
+    <text class="control-name" x="107" y="78">04</text>
+    <text class="control-function" data-control-function="3" x="107" y="95">
+      Mouse4
+    </text>
+  </g>
+  <g
+    class="map-control"
+    data-control="2"
+    role="button"
+    tabindex="0"
+    aria-label="Configure 03"
+  >
+    <path
+      class="control-surface"
+      d="M102 60 H220 Q222 60 220 62 C198 74 185 93 183 116 Q183 118 181 118 H102 Q100 118 100 116 V62 Q100 60 102 60 Z"
+      transform="translate(0 240) scale(1 -1)"
+    />
+    <text class="control-name" x="107" y="140">03</text>
+    <text class="control-function" data-control-function="2" x="107" y="157">
+      Mouse3
+    </text>
+  </g>
+  <g
+    class="map-control"
+    data-control="1"
+    role="button"
+    tabindex="0"
+    aria-label="Configure 02"
+  >
+    <path
+      class="control-surface"
+      d="M102 60 H220 Q222 60 220 62 C198 74 185 93 183 116 Q183 118 181 118 H102 Q100 118 100 116 V62 Q100 60 102 60 Z"
+      transform="translate(500 0) scale(-1 1)"
+    />
+    <text class="control-name" x="345" y="78">02</text>
+    <text class="control-function" data-control-function="1" x="345" y="95">
+      Mouse2
+    </text>
+  </g>
+  <g
+    class="map-control"
+    data-control="0"
+    role="button"
+    tabindex="0"
+    aria-label="Configure 01"
+  >
+    <path
+      class="control-surface"
+      d="M102 60 H220 Q222 60 220 62 C198 74 185 93 183 116 Q183 118 181 118 H102 Q100 118 100 116 V62 Q100 60 102 60 Z"
+      transform="translate(500 240) scale(-1 -1)"
+    />
+    <text class="control-name" x="345" y="140">01</text>
+    <text class="control-function" data-control-function="0" x="345" y="157">
+      Mouse1
+    </text>
+  </g>
+  <g
+    class="map-control center-label"
+    data-control="9"
+    role="button"
+    tabindex="0"
+    aria-label="Configure Trackball"
+  >
+    <circle class="control-surface" cx="250" cy="120" r="44" />
+    <text class="control-name" x="250" y="115">Trackball</text>
+    <text class="control-function" data-control-function="9" x="250" y="132">
+      Pointer
+    </text>
+  </g>
+  <g
+    class="map-control"
+    data-control="6"
+    role="button"
+    tabindex="0"
+    aria-label="Configure Round"
+  >
+    <circle class="control-surface" cx="81" cy="77" r="8" />
+  </g>
+  <g
+    class="map-control"
+    data-control="5"
+    role="button"
+    tabindex="0"
+    aria-label="Configure M2"
+  >
+    <rect
+      class="control-surface"
+      x="414"
+      y="69"
+      width="58"
+      height="45"
+      rx="9"
+    />
+  </g>
+  <g
+    class="map-control"
+    data-control="4"
+    role="button"
+    tabindex="0"
+    aria-label="Configure M1"
+  >
+    <rect
+      class="control-surface"
+      x="414"
+      y="126"
+      width="58"
+      height="45"
+      rx="9"
+    />
+  </g>
+  <g
+    class="map-control"
+    data-control="10"
+    role="button"
+    tabindex="0"
+    aria-label="Configure LED"
+  >
+    <rect class="led-hit" x="23" y="159" width="24" height="18" rx="3" />
+    <rect
+      class="control-surface"
+      id="device-led"
+      x="31"
+      y="167"
+      width="8"
+      height="8"
+      rx="1"
+    />
+    <title>Configure layer LED</title>
+  </g>
+  <g
+    class="map-control control-card"
+    data-control="6"
+    role="button"
+    tabindex="0"
+    aria-label="Configure Round"
+  >
+    <rect class="control-surface" x="10" y="6" width="112" height="45" rx="8" />
+    <text class="control-name" x="17" y="22">Round</text>
+    <text class="control-function" data-control-function="6" x="17" y="39">
+      Profile selector
+    </text>
+  </g>
+  <g
+    class="map-control control-card"
+    data-control="7"
+    role="button"
+    tabindex="0"
+    aria-label="Configure ↻ Clockwise"
+  >
+    <rect
+      class="control-surface"
+      x="194"
+      y="6"
+      width="112"
+      height="45"
+      rx="8"
+    />
+    <text class="control-name" x="201" y="22">↻ Clockwise</text>
+    <text class="control-function" data-control-function="7" x="201" y="39">
+      Scroll up
+    </text>
+  </g>
+  <g
+    class="map-control control-card"
+    data-control="5"
+    role="button"
+    tabindex="0"
+    aria-label="Configure M2"
+  >
+    <rect
+      class="control-surface"
+      x="378"
+      y="6"
+      width="112"
+      height="45"
+      rx="8"
+    />
+    <text class="control-name" x="385" y="22">M2</text>
+    <text class="control-function" data-control-function="5" x="385" y="39">
+      Hold layer 2
+    </text>
+  </g>
+  <g
+    class="map-control control-card"
+    data-control="8"
+    role="button"
+    tabindex="0"
+    aria-label="Configure ↺ Counterclockwise"
+  >
+    <rect
+      class="control-surface"
+      x="194"
+      y="190"
+      width="112"
+      height="45"
+      rx="8"
+    />
+    <text class="control-name" x="201" y="206">↺ Counterclockwise</text>
+    <text class="control-function" data-control-function="8" x="201" y="223">
+      Scroll down
+    </text>
+  </g>
+  <g
+    class="map-control control-card"
+    data-control="4"
+    role="button"
+    tabindex="0"
+    aria-label="Configure M1"
+  >
+    <rect
+      class="control-surface"
+      x="378"
+      y="190"
+      width="112"
+      height="45"
+      rx="8"
+    />
+    <text class="control-name" x="385" y="206">M1</text>
+    <text class="control-function" data-control-function="4" x="385" y="223">
+      L1 + release
+    </text>
+  </g>
+</svg>

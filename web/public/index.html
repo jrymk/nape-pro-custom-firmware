@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4f5f6" />
+    <title>
+      Nape Pro Configurator — Custom Keychron Firmware &amp; WebHID Tools
+    </title>
+    <meta
+      name="description"
+      content="Configure Keychron Nape Pro custom firmware in your browser: profiles, layers, button mappings, DPI, orientation and LED colors. Flash firmware, back up stock user data and adopt custom storage over USB with WebHID."
+    />
+    <meta property="og:type" content="website" />
+    <link rel="canonical" href="https://nape-pro.jerrymk.com/" />
+    <meta property="og:url" content="https://nape-pro.jerrymk.com/" />
+    <meta
+      property="og:title"
+      content="Nape Pro Configurator — Custom Keychron Firmware"
+    />
+    <meta
+      property="og:description"
+      content="Browser-based profiles, layers, button mappings and LED calibration for the Keychron Nape Pro. Includes USB firmware flashing, verified stock-data backup and adoption."
+    />
+    <meta property="og:site_name" content="Nape Pro Configurator" />
+    <meta name="twitter:card" content="summary" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Nape Pro Configurator",
+        "url": "https://nape-pro.jerrymk.com/",
+        "description": "A WebHID configurator and USB firmware utility for jerrymk’s custom firmware on the Keychron Nape Pro trackball. Configure profiles, layers, buttons, DPI, orientation and LED correction; flash firmware and back up or restore stock user data.",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Windows, macOS, Linux",
+        "browserRequirements": "Desktop Chrome or Edge with WebHID; HTTPS or localhost; USB data connection",
+        "isAccessibleForFree": true,
+        "isBasedOn": "https://github.com/jrymk/nape-pro-custom-firmware"
+      }
+    </script>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <button id="connect">Connect</button>
+      <span class="brand">Nape Studio</span>
+      <div class="connection">
+        <span id="connection-dot" class="dot"></span
+        ><span id="connection-label">Offline</span>
+      </div>
+      <div class="sync-status">
+        <strong id="sync-label">Not connected</strong
+        ><span id="sync-detail">Connecting...</span>
+      </div>
+      <div class="toolbar">
+        <button id="import">Import</button><button id="export">Export</button>
+      </div>
+      <progress
+        id="progress"
+        max="1"
+        value="0"
+        hidden
+        aria-label="USB transfer progress"
+      ></progress>
+    </header>
+    <aside class="sidebar" aria-label="Main navigation">
+      <button id="nav-editor" class="selected" aria-current="page">
+        <span aria-hidden="true">▦</span>Profiles</button
+      ><button id="device-settings">
+        <span aria-hidden="true">⚙</span>Device
+      </button>
+    </aside>
+    <main>
+      <div id="notice" role="status" aria-live="polite" class="notice">
+        Connecting to your trackball...
+      </div>
+      <div class="editor-grid" id="editor-view">
+        <section class="configuration pane" aria-label="Profiles and layers">
+          <nav
+            id="profiles"
+            class="profile-tabs"
+            aria-label="Profiles"
+            role="tablist"
+          ></nav>
+          <div class="layers-area">
+            <div class="layer-navigation">
+              <div class="section-line">
+                <span class="eyebrow">LAYERS</span
+                ><span id="layer-title" class="muted">Base layer</span>
+              </div>
+              <div class="layer-tabs-row">
+                <div id="layers" role="tablist" aria-label="Layers"></div>
+                <button
+                  id="jump-current"
+                  disabled
+                  title="Connect to show the active profile and layer"
+                >
+                  ↗ Current
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="layer-settings">
+            <div class="section-line">
+              <span class="eyebrow">LAYER SETTINGS</span
+              ><button id="layer-reset" class="text-button">
+                Reset this layer
+              </button>
+            </div>
+            <div class="setting-grid">
+              <label
+                >DPI<select id="dpi">
+                  <option value="0">Inherit</option>
+                  <option value="400">400</option>
+                  <option value="800">800</option>
+                  <option value="1200">1200</option>
+                  <option value="1600">1600</option>
+                  <option value="2400">2400</option>
+                  <option value="3200">3200</option>
+                  <option value="4000">4000</option>
+                  <option value="custom">Custom…</option>
+                </select></label
+              >
+              <label id="custom-dpi-label" hidden
+                >Custom DPI<input
+                  id="custom-dpi"
+                  type="number"
+                  min="400"
+                  max="4000"
+                  step="1"
+              /></label>
+              <label
+                >Ball function<select id="motion">
+                  <option value="0">Inherit</option>
+                  <option value="1">Pointer</option>
+                  <option value="2">Scroll</option>
+                  <option value="3">None</option>
+                </select></label
+              >
+              <label
+                >Orientation<select
+                  id="orientation"
+                  title="Rotate ball movement clockwise in screen coordinates; applies to pointer and ball scrolling."
+                >
+                  <option value="0">Inherit</option>
+                  <option value="1">0°</option>
+                  <option value="2">90° clockwise</option>
+                  <option value="3">180°</option>
+                  <option value="4">270° clockwise</option>
+                </select></label
+              >
+              <label
+                >Counts / scroll step<input
+                  id="scroll-counts"
+                  type="number"
+                  min="0"
+                  max="4000"
+                  step="1"
+              /></label>
+            </div>
+
+            <div
+              id="orientation-choices"
+              class="orientation-choices"
+              role="group"
+              aria-label="Trackball orientation"
+            ></div>
+            <div class="led-row">
+              <span class="led-label"
+                ><span id="led-dot" class="led-dot"></span>Layer LED</span
+              ><select id="led-mode" aria-label="Layer LED behavior">
+                <option value="inherit">Inherit</option>
+                <option value="solid">Solid color</option>
+                <option value="off">Off</option></select
+              ><input
+                id="layer-color"
+                type="color"
+                aria-label="Layer LED color"
+              /><span id="led-hint" class="muted">Profile color</span>
+            </div>
+          </div>
+          <div class="device-area">
+            <div class="section-line">
+              <span class="eyebrow">BUTTON MAP</span
+              ><span class="muted">Select a control to configure</span>
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="trackball"
+              viewBox="0 0 500 244"
+              role="group"
+              aria-label="Nape Pro control map"
+            >
+              <title>Nape Pro controls and layer functions</title>
+              <g class="map-outline" aria-hidden="true">
+                <path
+                  d="M32 60 H95 V180 H32 Q20 180 20 168 V72 Q20 60 32 60 Z"
+                />
+                <path
+                  d="M405 60 H468 Q480 60 480 72 V168 Q480 180 468 180 H405 Z"
+                />
+                <circle cx="250" cy="120" r="61" />
+                <circle cx="250" cy="120" r="52" />
+              </g>
+              <g
+                class="map-control"
+                data-control="3"
+                role="button"
+                tabindex="0"
+                aria-label="Configure 04"
+              >
+                <path
+                  class="control-surface"
+                  d="M102 60 H220 Q222 60 220 62 C198 74 185 93 183 116 Q183 118 181 118 H102 Q100 118 100 116 V62 Q100 60 102 60 Z"
+                  transform=""
+                />
+                <text class="control-name" x="107" y="78">04</text>
+                <text
+                  class="control-function"
+                  data-control-function="3"
+                  x="107"
+                  y="95"
+                >
+                  Mouse4
+                </text>
+              </g>
+              <g
+                class="map-control"
+                data-control="2"
+                role="button"
+                tabindex="0"
+                aria-label="Configure 03"
+              >
+                <path
+                  class="control-surface"
+                  d="M102 60 H220 Q222 60 220 62 C198 74 185 93 183 116 Q183 118 181 118 H102 Q100 118 100 116 V62 Q100 60 102 60 Z"
+                  transform="translate(0 240) scale(1 -1)"
+                />
+                <text class="control-name" x="107" y="140">03</text>
+                <text
+                  class="control-function"
+                  data-control-function="2"
+                  x="107"
+                  y="157"
+                >
+                  Mouse3
+                </text>
+              </g>
+              <g
+                class="map-control"
+                data-control="1"
+                role="button"
+                tabindex="0"
+                aria-label="Configure 02"
+              >
+                <path
+                  class="control-surface"
+                  d="M102 60 H220 Q222 60 220 62 C198 74 185 93 183 116 Q183 118 181 118 H102 Q100 118 100 116 V62 Q100 60 102 60 Z"
+                  transform="translate(500 0) scale(-1 1)"
+                />
+                <text class="control-name" x="345" y="78">02</text>
+                <text
+                  class="control-function"
+                  data-control-function="1"
+                  x="345"
+                  y="95"
+                >
+                  Mouse2
+                </text>
+              </g>
+              <g
+                class="map-control"
+                data-control="0"
+                role="button"
+                tabindex="0"
+                aria-label="Configure 01"
+              >
+                <path
+                  class="control-surface"
+                  d="M102 60 H220 Q222 60 220 62 C198 74 185 93 183 116 Q183 118 181 118 H102 Q100 118 100 116 V62 Q100 60 102 60 Z"
+                  transform="translate(500 240) scale(-1 -1)"
+                />
+                <text class="control-name" x="345" y="140">01</text>
+                <text
+                  class="control-function"
+                  data-control-function="0"
+                  x="345"
+                  y="157"
+                >
+                  Mouse1
+                </text>
+              </g>
+              <g
+                class="map-control center-label"
+                data-control="9"
+                role="button"
+                tabindex="0"
+                aria-label="Configure Trackball"
+              >
+                <circle class="control-surface" cx="250" cy="120" r="44" />
+                <text class="control-name" x="250" y="115">Trackball</text>
+                <text
+                  class="control-function"
+                  data-control-function="9"
+                  x="250"
+                  y="132"
+                >
+                  Pointer
+                </text>
+              </g>
+              <g
+                class="map-control"
+                data-control="6"
+                role="button"
+                tabindex="0"
+                aria-label="Configure Round"
+              >
+                <circle class="control-surface" cx="81" cy="77" r="8" />
+              </g>
+              <g
+                class="map-control"
+                data-control="5"
+                role="button"
+                tabindex="0"
+                aria-label="Configure M2"
+              >
+                <rect
+                  class="control-surface"
+                  x="414"
+                  y="69"
+                  width="58"
+                  height="45"
+                  rx="9"
+                />
+              </g>
+              <g
+                class="map-control"
+                data-control="4"
+                role="button"
+                tabindex="0"
+                aria-label="Configure M1"
+              >
+                <rect
+                  class="control-surface"
+                  x="414"
+                  y="126"
+                  width="58"
+                  height="45"
+                  rx="9"
+                />
+              </g>
+              <g
+                class="map-control"
+                data-control="10"
+                role="button"
+                tabindex="0"
+                aria-label="Configure LED"
+              >
+                <rect
+                  class="led-hit"
+                  x="23"
+                  y="159"
+                  width="24"
+                  height="18"
+                  rx="3"
+                />
+                <rect
+                  class="control-surface"
+                  id="device-led"
+                  x="31"
+                  y="167"
+                  width="8"
+                  height="8"
+                  rx="1"
+                />
+                <title>Configure layer LED</title>
+              </g>
+              <g
+                class="map-control control-card"
+                data-control="6"
+                role="button"
+                tabindex="0"
+                aria-label="Configure Round"
+              >
+                <rect
+                  class="control-surface"
+                  x="10"
+                  y="6"
+                  width="112"
+                  height="45"
+                  rx="8"
+                />
+                <text class="control-name" x="17" y="22">Round</text>
+                <text
+                  class="control-function"
+                  data-control-function="6"
+                  x="17"
+                  y="39"
+                >
+                  Profile selector
+                </text>
+              </g>
+              <g
+                class="map-control control-card"
+                data-control="7"
+                role="button"
+                tabindex="0"
+                aria-label="Configure ↻ Clockwise"
+              >
+                <rect
+                  class="control-surface"
+                  x="194"
+                  y="6"
+                  width="112"
+                  height="45"
+                  rx="8"
+                />
+                <text class="control-name" x="201" y="22">↻ Clockwise</text>
+                <text
+                  class="control-function"
+                  data-control-function="7"
+                  x="201"
+                  y="39"
+                >
+                  Scroll up
+                </text>
+              </g>
+              <g
+                class="map-control control-card"
+                data-control="5"
+                role="button"
+                tabindex="0"
+                aria-label="Configure M2"
+              >
+                <rect
+                  class="control-surface"
+                  x="378"
+                  y="6"
+                  width="112"
+                  height="45"
+                  rx="8"
+                />
+                <text class="control-name" x="385" y="22">M2</text>
+                <text
+                  class="control-function"
+                  data-control-function="5"
+                  x="385"
+                  y="39"
+                >
+                  Hold layer 2
+                </text>
+              </g>
+              <g
+                class="map-control control-card"
+                data-control="8"
+                role="button"
+                tabindex="0"
+                aria-label="Configure ↺ Counterclockwise"
+              >
+                <rect
+                  class="control-surface"
+                  x="194"
+                  y="190"
+                  width="112"
+                  height="45"
+                  rx="8"
+                />
+                <text class="control-name" x="201" y="206">
+                  ↺ Counterclockwise
+                </text>
+                <text
+                  class="control-function"
+                  data-control-function="8"
+                  x="201"
+                  y="223"
+                >
+                  Scroll down
+                </text>
+              </g>
+              <g
+                class="map-control control-card"
+                data-control="4"
+                role="button"
+                tabindex="0"
+                aria-label="Configure M1"
+              >
+                <rect
+                  class="control-surface"
+                  x="378"
+                  y="190"
+                  width="112"
+                  height="45"
+                  rx="8"
+                />
+                <text class="control-name" x="385" y="206">M1</text>
+                <text
+                  class="control-function"
+                  data-control-function="4"
+                  x="385"
+                  y="223"
+                >
+                  L1 + release
+                </text>
+              </g>
+            </svg>
+            <div class="button-chips" id="button-chips"></div>
+            <div class="mapping-preview">
+              <span id="selected-button-label">M1</span>
+              <div>
+                <strong id="binding-label">Layer + unused release</strong
+                ><small id="binding-description"
+                  >Hold layer 1 · release unused for Mouse5</small
+                >
+              </div>
+            </div>
+            <p class="field-note">
+              Round + ring selects a profile. Wheel directions have separate tap
+              actions.
+            </p>
+          </div>
+        </section>
+        <section
+          class="action-pane pane"
+          aria-label="Action library and settings"
+        >
+          <div id="binding-behavior" class="binding-behavior"></div>
+          <label class="search"
+            ><span aria-hidden="true">⌕</span
+            ><input
+              id="search"
+              type="search"
+              placeholder="Search actions, layers, shortcuts…"
+              aria-label="Search actions"
+            /><kbd>/</kbd></label
+          >
+          <nav
+            class="category-tabs"
+            id="categories"
+            aria-label="Action categories"
+          ></nav>
+          <div id="input-palette"></div>
+          <div class="action-list" id="actions"></div>
+          <div class="action-pagination">
+            <span id="action-count"></span
+            ><button id="actions-prev" aria-label="Previous actions">←</button
+            ><span id="action-page"></span
+            ><button id="actions-next" aria-label="Next actions">→</button>
+          </div>
+          <div class="action-inspector">
+            <div class="section-line">
+              <span class="eyebrow">ACTION SETTINGS</span
+              ><span id="inspector-context" class="muted">M1 / Layer 0</span>
+            </div>
+            <div id="inspector"></div>
+          </div>
+        </section>
+      </div>
+      <section
+        id="device-view"
+        class="pane device-view"
+        hidden
+        aria-label="Device settings"
+      >
+        <div class="section-line">
+          <h1>Device</h1>
+          <a
+            href="https://github.com/jrymk/nape-pro-custom-firmware"
+            target="_blank"
+            rel="noopener noreferrer"
+            >GitHub ↗</a
+          >
+        </div>
+        <div class="dialog-body">
+          <div id="device-tools"></div>
+          <p class="muted">
+            Settings apply after 200 ms without edits and save to flash after
+            1.5 seconds without edits.
+          </p>
+          <div class="setting-grid">
+            <label
+              >Transport<select id="transport">
+                <option value="0">Auto · physical switch</option>
+                <option value="1">Wired only</option>
+                <option value="2">2.4 GHz only</option>
+              </select></label
+            ><label>Startup profile<select id="initial-profile"></select></label
+            ><label
+              >Debounce (ms)<input id="debounce" type="number" min="1" max="30"
+            /></label>
+          </div>
+
+          <div class="setting-card">
+            <strong>Receiver pairing</strong>
+            <p id="bond-status">No receiver bond configured.</p>
+            <button id="import-bond">Import from stock backup</button
+            ><small
+              >Your .npb is verified and read in this browser. It is never
+              uploaded.</small
+            >
+          </div>
+          <div class="setting-card">
+            <div class="section-line">
+              <strong>Connected device</strong
+              ><button id="refresh-status" class="text-button">
+                Refresh status
+              </button>
+            </div>
+            <pre id="device-status">Not connected.</pre>
+            <div class="dialog-actions">
+              <button id="resume" disabled>Resume saved input</button
+              ><button id="disconnect" disabled>Disconnect</button>
+            </div>
+          </div>
+          <div class="setting-card">
+            <strong>LED correction</strong>
+            <div class="setting-grid">
+              <label
+                >Gamma<input
+                  id="led-gamma"
+                  type="number"
+                  min="1"
+                  max="4"
+                  step="0.1"
+              /></label>
+              <label
+                >Brightness (%)<input
+                  id="led-brightness"
+                  type="number"
+                  min="0"
+                  max="100"
+              /></label>
+              <label
+                >Red (%)<input id="led-red" type="number" min="0" max="100"
+              /></label>
+              <label
+                >Green (%)<input id="led-green" type="number" min="0" max="100"
+              /></label>
+              <label
+                >Blue (%)<input id="led-blue" type="number" min="0" max="100"
+              /></label>
+            </div>
+            <small
+              >Gamma 2.2 by default. Reduce the stronger channels to balance
+              white. Calibration applies to profile/layer/action colors;
+              recovery and protected indicators remain visible.</small
+            >
+          </div>
+          <section class="setting-card project-description">
+            <h2>About this tool</h2>
+            <p>
+              Nape Pro Configurator manages jerrymk’s custom firmware for the
+              Keychron Nape Pro trackball. Configure eight profiles with eight
+              layers each, button actions, DPI, orientation, trackball scrolling
+              and LED colors. The Device tools flash firmware over USB and back
+              up, adopt or restore stock user data.
+            </p>
+            <p>
+              Use desktop Chrome or Edge and the trackball’s USB data cable. All
+              device communication and file processing happen locally in your
+              browser. This is an independent project, not an official Keychron
+              application.
+            </p>
+            <a
+              href="https://github.com/jrymk/nape-pro-custom-firmware"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Source code and setup instructions on GitHub</a
+            >
+          </section>
+        </div>
+      </section>
+    </main>
+    <dialog id="profile-dialog">
+      <div class="dialog-heading">
+        <strong>Profile settings</strong
+        ><button id="close-profile" aria-label="Close profile settings">
+          ×
+        </button>
+      </div>
+      <div class="profile-details">
+        <label class="grow"
+          >Profile name<input
+            id="profile-name"
+            maxlength="23"
+            aria-label="Profile name" /></label
+        ><label
+          >Color<input
+            id="profile-color"
+            type="color"
+            aria-label="Profile color" /></label
+        ><label
+          >Report rate<select id="report-rate" aria-label="Report rate">
+            <option value="125">125 Hz</option>
+            <option value="250">250 Hz</option>
+            <option value="500">500 Hz</option>
+            <option value="1000">1000 Hz · experimental</option>
+          </select></label
+        >
+      </div>
+      <div class="profile-management">
+        <button id="move-profile-left">← Move earlier</button
+        ><button id="move-profile-right">Move later →</button
+        ><button id="delete-profile" class="danger">Delete profile</button>
+      </div>
+      <p class="field-note">
+        Up to eight profiles. Drag profiles to reorder, or use these buttons.
+      </p>
+    </dialog>
+    <div id="layer-menu" class="context-menu" popover>
+      <button id="copy-layer">Copy layer</button
+      ><button id="paste-layer">Paste layer</button>
+    </div>
+    <dialog id="import-dialog" class="profile-dialog">
+      <div class="dialog-body">
+        <button id="choose-json">Choose JSON file</button>
+        <label
+          >Or paste exported JSON<textarea
+            id="import-json-text"
+            rows="8"
+            spellcheck="false"
+          ></textarea>
+        </label>
+        <div class="dialog-actions">
+          <button id="cancel-json">Cancel</button
+          ><button id="apply-json">Import</button>
+        </div>
+      </div>
+    </dialog>
+    <input
+      id="json-file"
+      type="file"
+      accept=".json,application/json"
+      hidden
+    /><input id="bond-file" type="file" accept=".npb" hidden />
+  </body>
+</html>
